@@ -98,30 +98,16 @@
                 if (response.ok) {
                     // Update success message to show order_id
                     const orderId = data.order_id;
-                    try {
-                        await navigator.clipboard.writeText(orderId);
-                        messageDiv.textContent = `订单创建成功，订单号: ${orderId} 已复制，正在跳转...`;
-                        messageDiv.style.color = 'green';
-                        // Pass account number and orderId to the next page
-                        const redirectUrl = `/mock_payment?orderId=${orderId}&amount=${amount}`;
-                        setTimeout(() => { window.location.replace(redirectUrl); }, 1500); // Add a small delay before redirecting
+                    messageDiv.textContent = `订单创建成功，订单号: ${orderId}，正在跳转...`;
+                    messageDiv.style.color = 'green';
+                    // Pass account number and orderId to the next page
+                    const redirectUrl = `/mock_payment?orderId=${orderId}&amount=${amount}`;
+                    setTimeout(() => { window.location.replace(redirectUrl); }, 1500); // Add a small delay before redirecting
 
-                        // Hide the balance query button
-                        const balanceButton = document.getElementById('balanceQueryButtonContainer');
-                        if (balanceButton) {
-                            balanceButton.style.display = 'none';
-                        }
-                    } catch (clipboardError) {
-                        console.error('Failed to copy order ID to clipboard:', clipboardError);
-                        messageDiv.textContent = `订单创建成功，订单号: ${orderId} (自动复制失败)，正在跳转...`;
-                        messageDiv.style.color = 'orange'; // Use a different color for partial success
-                         setTimeout(() => { window.location.replace(`/mock_payment?orderId=${orderId}`); }, 1500); // 修改这里，添加 orderId 参数
-
-                        // Hide the balance query button
-                        const balanceButton = document.getElementById('balanceQueryButtonContainer');
-                        if (balanceButton) {
-                            balanceButton.style.display = 'none';
-                        }
+                    // Hide the balance query button
+                    const balanceButton = document.getElementById('balanceQueryButtonContainer');
+                    if (balanceButton) {
+                        balanceButton.style.display = 'none';
                     }
                 } else {
                     // Update failure message to show backend error message
