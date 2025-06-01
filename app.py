@@ -196,7 +196,9 @@ def check_balance():
     account = request.args.get("account")
     return jsonify({
         "code": 200,
-        "balance": DB["users"].get(account, 0.0)
+        "account": account,
+        "balance": DB["users"].get(account, 0.0),
+        "update_time": time.time()
     }), 200
 
 
