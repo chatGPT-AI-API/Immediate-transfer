@@ -92,6 +92,15 @@
             }
         }
 
+        // Get amount from URL parameters when the page loads
+        const amountFromUrl = urlParams.get('amount');
+        if (amountFromUrl) {
+            const amountInput = document.getElementById('amount');
+            if (amountInput) {
+                amountInput.value = amountFromUrl;
+            }
+        }
+
         function simulatePayment() {
             const amount = document.getElementById('amount').value;
             const orderId = document.getElementById('orderId').value;
