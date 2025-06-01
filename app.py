@@ -4,6 +4,9 @@ import time
 import re
 from dotenv import load_dotenv
 import requests
+import io
+import base64
+import qrcode
 
 load_dotenv()  # 加载环境变量（模拟配置）
 
