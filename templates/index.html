@@ -103,7 +103,7 @@
                         messageDiv.textContent = `订单创建成功，订单号: ${orderId} 已复制，正在跳转...`;
                         messageDiv.style.color = 'green';
                         // Pass account number and orderId to the next page
-                        const redirectUrl = `/mock_payment?orderId=${orderId}`;
+                        const redirectUrl = `/mock_payment?orderId=${orderId}&amount=${amount}`;
                         setTimeout(() => { window.location.replace(redirectUrl); }, 1500); // Add a small delay before redirecting
 
                         // Hide the balance query button
