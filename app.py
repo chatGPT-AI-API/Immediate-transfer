@@ -45,10 +45,10 @@ def balance_query_page():
 # 模拟数据库（内存存储，生产环境需替换为MySQL/Redis等）
 DB = {
     "orders": {},          # 订单存储 {order_id: order_info}
-    "users": {             # 用户余额 {user_id: balance}
-        "13812345678": 100.0,    # 测试用户
-        "13512345678": 50.0,     # 新增用户1
-        "13612345678": 200.0     # 新增用户2
+    "users": {             # 用户余额 {user_id: {"balance": float, "update_time": float}}
+        "13812345678": {"balance": 100.0, "update_time": time.time()},    # 普通用户
+        "13512345678": {"balance": 50.0, "update_time": time.time()},     # 普通用户2
+        "13612345678": {"balance": 200.0, "update_time": time.time()}     # 普通用户3
     }
 }
 
@@ -125,8 +125,9 @@ class RechargeService:
 
         # 模拟账户余额更新（实际需调用钱包服务）
         if account not in DB["users"]:
-            DB["users"][account] = 0.0
-        DB["users"][account] += amount
+            DB["users"][account] = {"balance": 0.0, "update_time": time.time()}
+        DB["users"][account]["balance"] += amount
+        DB["users"][account]["update_time"] = time.time()
         OrderService.update_order_status(order_id, "recharged")
         return True
 
@@ -168,8 +169,9 @@ def simulate_payment():
         order = DB["orders"][order_id]
         if order["account"] in DB["users"]:
             # 再次校验余额(防止并发问题)
-            if DB["users"][order["account"]] >= order["amount"]:
-                DB["users"][order["account"]] -= order["amount"]
+            if DB["users"][order["account"]]["balance"] >= order["amount"]:
+                DB["users"][order["account"]]["balance"] -= order["amount"]
+                DB["users"][order["account"]]["update_time"] = time.time()
             else:
                 # 余额不足，回滚订单状态
                 OrderService.update_order_status(order_id, "failed")
@@ -212,8 +214,8 @@ def check_balance():
     return jsonify({
         "code": 200,
         "account": account,
-        "balance": DB["users"].get(account, 0.0),
-        "update_time": time.time()
+        "balance": DB["users"].get(account, {"balance": 0.0, "update_time": 0})["balance"],
+        "update_time": DB["users"].get(account, {"balance": 0.0, "update_time": 0})["update_time"]
     }), 200
 
 

@@ -117,7 +117,7 @@
                     showResult('查询成功', 
                               data.account, 
                               `${data.balance}元`, 
-                              new Date(data.update_time).toLocaleString(),
+                              data.update_time ? new Date(data.update_time * 1000).toLocaleString() : '无记录',
                               'success');
                 } else {
                     showResult('查询失败', 
