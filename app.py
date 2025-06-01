@@ -139,12 +139,12 @@ def place_order():
 
     # 校验参数
     if not validate_user(account):
-        return jsonify({"code": 400, "msg": "Invalid account"}), 400
+        return jsonify({"code": 400, "msg": "账号无效"}), 400
     if amount <= 0:
-        return jsonify({"code": 400, "msg": "Invalid amount"}), 400
+        return jsonify({"code": 400, "msg": "金额无效"}), 400
     # 检查余额是否充足
     if account in DB["users"] and DB["users"][account] < amount:
-        return jsonify({"code": 400, "msg": "Insufficient balance"}), 400
+        return jsonify({"code": 400, "msg": "余额不足"}), 400
 
     # 生成订单
     order_id = OrderService.create_order(account, amount)
@@ -156,7 +156,7 @@ def simulate_payment():
     """模拟支付接口（实际需跳转支付网关）"""
     order_id = request.json.get("order_id")
     if order_id not in DB["orders"]:
-        return jsonify({"code": 404, "msg": "Order not found"}), 404
+        return jsonify({"code": 404, "msg": "订单不存在"}), 404
 
     # 模拟支付流程
     pay_result = PaymentService.simulate_payment(order_id)
@@ -177,7 +177,7 @@ def simulate_payment():
             "msg": "Payment succeeded",
             "transaction_id": pay_result["transaction_id"]
         }), 200
-    return jsonify({"code": 400, "msg": "Payment failed"}), 400
+    return jsonify({"code": 400, "msg": "支付失败"}), 400
 
 
 @app.route("/api/payment_callback", methods=["POST"])
@@ -188,7 +188,7 @@ def payment_callback():
 
     # 校验签名（简化逻辑）
     if not PaymentService.verify_signature(params):
-        return jsonify({"code": 403, "msg": "Invalid signature"}), 403
+        return jsonify({"code": 403, "msg": "签名无效"}), 403
 
     # 处理支付结果
     if DB["orders"][order_id]["status"] == "paid":
@@ -200,7 +200,7 @@ def payment_callback():
         # 通知用户（示例中用打印模拟，实际需用WebSocket/短信等）
         print(f"Recharged {order['amount']} to {order['account']}")
         return jsonify({"code": 200, "msg": "Recharge succeeded"}), 200
-    return jsonify({"code": 500, "msg": "Recharge failed"}), 500
+    return jsonify({"code": 500, "msg": "充值失败"}), 500
 
 
 @app.route("/api/check_balance", methods=["GET"])
