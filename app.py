@@ -59,10 +59,10 @@ API_SECRET = "your-secret-key"  # 支付签名密钥
 
 ### **模块1：用户中心服务（模拟账号校验）**
 def validate_user(account: str) -> bool:
-    """校验账号有效性（示例：假设账号为手机号格式）"""
-    if not re.match(r'^1[3-9]\d{9}$', account):
+    """校验账号有效性（示例：假设账号为手机号格式，且必须存在于模拟数据库中）"""
+    if not re.match(r'^1[3-9]\\d{9}$', account):
         return False
-    return account in DB["users"] or True  # 允许新用户（实际需根据业务调整）
+    return account in DB["users"] # 修改为只允许已存在的用户
 
 
 ### **模块2：订单服务**
@@ -141,13 +141,23 @@ def place_order():
     amount = data.get("amount")
 
     # 校验参数
+    if not account or not amount: # Added check for missing account or amount
+        return jsonify({"code": 400, "msg": "缺少账号或金额参数"}), 400
+
+    try:
+        amount = float(amount) # Ensure amount is a float
+    except (ValueError, TypeError):
+        return jsonify({"code": 400, "msg": "金额格式无效"}), 400
+
+
     if not validate_user(account):
-        return jsonify({"code": 400, "msg": "账号无效"}), 400
+        return jsonify({"code": 400, "msg": "账号无效或不存在"}), 400
     if amount <= 0:
         return jsonify({"code": 400, "msg": "金额无效"}), 400
+
     # 检查余额是否充足
-    if account in DB["users"] and DB["users"][account] < amount:
-        return jsonify({"code": 400, "msg": "余额不足"}), 400
+    if account in DB["users"] and DB["users"][account].get("balance", 0) < amount: # Added .get("balance", 0) to handle missing balance key and default to 0
+         return jsonify({"code": 400, "msg": "余额不足"}), 400
 
     # 生成订单
     order_id = OrderService.create_order(account, amount)
