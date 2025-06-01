@@ -46,7 +46,7 @@ def balance_query_page():
 DB = {
     "orders": {},          # 订单存储 {order_id: order_info}
     "users": {             # 用户余额 {user_id: balance}
-        "13812345678": 200.0    # 测试用户
+        "13812345678": 100.0    # 用户
     }
 }
 
