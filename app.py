@@ -113,6 +113,37 @@ class PaymentService:
         # 简化逻辑：校验order_id存在且签名与秘钥一致
         return params.get("order_id") in DB["orders"] and params.get("signature") == API_SECRET
 
+    @staticmethod
+    def generate_qr_code(order_id: str, amount: float) -> dict:
+        """生成支付二维码"""
+        # 构建支付链接（实际环境需要真实的支付网关链接）
+        payment_url = f"{PAYMENT_GATEWAY}/pay?order_id={order_id}&amount={amount}"
+        
+        # 生成二维码
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(payment_url)
+        qr.make(fit=True)
+        
+        # 创建二维码图片
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        # 转换为base64字符串
+        buffer = io.BytesIO()
+        img.save(buffer, format='PNG')
+        img_str = base64.b64encode(buffer.getvalue()).decode()
+        
+        return {
+            "qr_code": f"data:image/png;base64,{img_str}",
+            "payment_url": payment_url,
+            "order_id": order_id,
+            "amount": amount
+        }
+
 
 ### **模块4：充值服务（核心实时操作）**
 class RechargeService:
@@ -166,12 +197,26 @@ def place_order():
 
 @app.route("/api/pay", methods=["POST"])
 def simulate_payment():
-    """模拟支付接口（实际需跳转支付网关）"""
-    order_id = request.json.get("order_id")
+    """支付接口（支持二维码支付）"""
+    data = request.json
+    order_id = data.get("order_id")
+    payment_method = data.get("payment_method", "direct")  # direct/qr_code
+    
     if order_id not in DB["orders"]:
         return jsonify({"code": 404, "msg": "订单不存在"}), 404
-
-    # 模拟支付流程
+    
+    order = DB["orders"][order_id]
+    
+    # 如果是二维码支付，返回二维码信息
+    if payment_method == "qr_code":
+        qr_data = PaymentService.generate_qr_code(order_id, order["amount"])
+        return jsonify({
+            "code": 200,
+            "payment_method": "qr_code",
+            "data": qr_data
+        }), 200
+    
+    # 原有的直接支付逻辑
     pay_result = PaymentService.simulate_payment(order_id)
     if pay_result["status"] == "success":
         OrderService.update_order_status(order_id, "paid")
@@ -193,6 +238,57 @@ def simulate_payment():
         }), 200
     return jsonify({"code": 400, "msg": "支付失败"}), 400
 
+
+@app.route("/api/generate_qr_payment", methods=["POST"])
+def generate_qr_payment():
+    """生成支付二维码接口"""
+    data = request.json
+    order_id = data.get("order_id")
+    
+    if not order_id or order_id not in DB["orders"]:
+        return jsonify({"code": 404, "msg": "订单不存在"}), 404
+    
+    order = DB["orders"][order_id]
+    if order["status"] != "pending":
+        return jsonify({"code": 400, "msg": "订单状态不允许支付"}), 400
+    
+    # 生成二维码
+    qr_data = PaymentService.generate_qr_code(order_id, order["amount"])
+    
+    return jsonify({
+        "code": 200,
+        "data": qr_data
+    }), 200
+
+@app.route("/api/check_order_status", methods=["GET"])
+def check_order_status():
+    """查询订单状态"""
+    order_id = request.args.get("order_id")
+    if not order_id or order_id not in DB["orders"]:
+        return jsonify({"code": 404, "msg": "订单不存在"}), 404
+    
+    order = DB["orders"][order_id]
+    return jsonify({
+        "code": 200,
+        "status": order["status"],
+        "order_id": order_id,
+        "amount": order["amount"]
+    }), 200
+
+@app.route('/qr_payment')
+def qr_payment_page():
+    """二维码支付页面"""
+    order_id = request.args.get('order_id')
+    if not order_id or order_id not in DB["orders"]:
+        return "订单不存在", 404
+    
+    order = DB["orders"][order_id]
+    qr_data = PaymentService.generate_qr_code(order_id, order["amount"])
+    
+    return render_template('qr_payment.html',
+                         order_id=order_id,
+                         amount=order["amount"],
+                         qr_code=qr_data["qr_code"])
 
 @app.route("/api/payment_callback", methods=["POST"])
 def payment_callback():
