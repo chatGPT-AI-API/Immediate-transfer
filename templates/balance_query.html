@@ -53,6 +53,9 @@
             font-size: 16px;
             transition: background-color 0.3s ease;
         }
+        .btn-query:not(:last-child) {
+            margin-bottom: 10px;
+        }
         .btn-query:hover {
             background-color: #0b7dda;
         }
@@ -79,6 +82,7 @@
             <input type="text" id="account" placeholder="请输入您的账户号码" value="13812345678">
         </div>
         <button class="btn-query" onclick="queryBalance()">查询余额</button>
+        <button class="btn-query" onclick="window.location.href='/index'">返回首页</button>
         
         <div class="result-area" id="resultArea" style="display: none;">
             <h3 id="resultTitle"></h3>
