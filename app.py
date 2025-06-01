@@ -142,6 +142,9 @@ def place_order():
         return jsonify({"code": 400, "msg": "Invalid account"}), 400
     if amount <= 0:
         return jsonify({"code": 400, "msg": "Invalid amount"}), 400
+    # 检查余额是否充足
+    if account in DB["users"] and DB["users"][account] < amount:
+        return jsonify({"code": 400, "msg": "Insufficient balance"}), 400
 
     # 生成订单
     order_id = OrderService.create_order(account, amount)
@@ -159,6 +162,16 @@ def simulate_payment():
     pay_result = PaymentService.simulate_payment(order_id)
     if pay_result["status"] == "success":
         OrderService.update_order_status(order_id, "paid")
+        # 支付成功后扣除用户余额
+        order = DB["orders"][order_id]
+        if order["account"] in DB["users"]:
+            # 再次校验余额(防止并发问题)
+            if DB["users"][order["account"]] >= order["amount"]:
+                DB["users"][order["account"]] -= order["amount"]
+            else:
+                # 余额不足，回滚订单状态
+                OrderService.update_order_status(order_id, "failed")
+                return jsonify({"code": 400, "msg": "Insufficient balance"}), 400
         return jsonify({
             "code": 200,
             "msg": "Payment succeeded",
