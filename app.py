@@ -187,14 +187,25 @@ def place_order():
     except (ValueError, TypeError):
         return jsonify({"code": 400, "msg": "金额格式无效"}), 400
 
+    # 校验账号格式(支持11位手机号)
+    # 先去除前后空格
+    account = account.strip()
+    # 更严格的手机号验证
+    if not re.match(r'^1[3-9]\d{9}$', account) or len(account) != 11:
+        return jsonify({
+            "code": 400,
+            "msg": f"账号格式无效，请输入11位中国大陆手机号(如13812345678)，当前输入: {account} (长度: {len(account)})"
+        }), 400
 
-    if not validate_user(account):
-        return jsonify({"code": 400, "msg": "账号无效或不存在"}), 400
     if amount <= 0:
         return jsonify({"code": 400, "msg": "金额无效"}), 400
 
+    # 自动创建新用户(如果不存在)
+    if account not in DB["users"]:
+        DB["users"][account] = {"balance": 0.0, "update_time": time.time()}
+
     # 检查余额是否充足
-    if account in DB["users"] and DB["users"][account].get("balance", 0) < amount: # Added .get("balance", 0) to handle missing balance key and default to 0
+    if DB["users"][account].get("balance", 0) < amount:
          return jsonify({"code": 400, "msg": "余额不足"}), 400
 
     # 生成订单
