@@ -7,8 +7,12 @@ import requests
 import io
 import base64
 import qrcode
+import os
 
-load_dotenv()  # 加载环境变量（模拟配置）
+load_dotenv()  # 加载环境变量
+
+# 支付模式配置 (True=模拟模式, False=真实模式)
+MOCK_MODE = os.getenv('MOCK_MODE', 'true').lower() == 'true'
 
 app = Flask(__name__, template_folder='templates')
 
@@ -199,8 +203,10 @@ def place_order():
 
 
 @app.route("/api/pay", methods=["POST"])
-def simulate_payment():
-    """支付接口（支持二维码支付）"""
+def process_payment():
+    """支付接口（支持二维码支付）
+    根据MOCK_MODE决定使用模拟支付还是真实支付
+    """
     data = request.json
     order_id = data.get("order_id")
     payment_method = data.get("payment_method", "direct")  # direct/qr_code
@@ -219,8 +225,12 @@ def simulate_payment():
             "data": qr_data
         }), 200
     
-    # 原有的直接支付逻辑
-    pay_result = PaymentService.simulate_payment(order_id)
+    # 根据模式选择支付方式
+    if MOCK_MODE:
+        pay_result = PaymentService.simulate_payment(order_id)
+    else:
+        # TODO: 调用真实支付接口
+        return jsonify({"code": 501, "msg": "真实支付功能暂未实现"}), 501
     if pay_result["status"] == "success":
         OrderService.update_order_status(order_id, "paid")
         # 支付成功后扣除用户余额
@@ -327,6 +337,15 @@ def check_balance():
         "update_time": DB["users"].get(account, {"balance": 0.0, "update_time": 0})["update_time"]
     }), 200
 
+
+@app.route("/api/payment_mode", methods=["GET"])
+def get_payment_mode():
+    """获取当前支付模式"""
+    return jsonify({
+        "code": 200,
+        "mock_mode": MOCK_MODE,
+        "message": "模拟模式已启用" if MOCK_MODE else "真实支付模式"
+    }), 200
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)
