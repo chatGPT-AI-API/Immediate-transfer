@@ -78,6 +78,7 @@
         const orderId = urlParams.get('order_id');
         const amount = urlParams.get('amount');
         const payTime = urlParams.get('pay_time') || new Date().toLocaleString();
+        const msg = urlParams.get('msg') || '支付失败';
 
         // 渲染支付结果UI
         const resultIcon = document.getElementById('resultIcon');
@@ -91,7 +92,7 @@
         } else {
             resultIcon.innerHTML = '✗';
             resultIcon.className = 'result-icon failure';
-            resultMessage.textContent = '支付失败';
+            resultMessage.textContent = msg;
             resultMessage.style.color = '#f44336';
         }
 

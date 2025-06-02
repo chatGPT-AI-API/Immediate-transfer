@@ -8,6 +8,7 @@ import io
 import base64
 import qrcode
 import os
+from admin import PaymentGateway, PaymentMethod, PaymentStatus
 
 load_dotenv()  # 加载环境变量
 
@@ -59,9 +60,12 @@ DB = {
     }
 }
 
-# 模拟支付网关配置(实际需从支付平台获取)
-PAYMENT_GATEWAY = "https://mock-payment-gateway.com"
-API_SECRET = "your-secret-key"  # 支付接口签名密钥
+# 支付网关配置
+payment_gateway = PaymentGateway({
+    "gateway_url": "http://localhost:5000",
+    "api_secret": "your-secret-key",
+    "mock_mode": MOCK_MODE
+})
 
 
 ### **模块1：用户中心服务（模拟账号校验）**
@@ -100,56 +104,26 @@ class OrderService:
         return None
 
 
-### **模块3：支付服务（模拟支付网关调用）**
+### **模块3：支付服务（使用支付网关）**
 class PaymentService:
     @staticmethod
     def simulate_payment(order_id: str) -> dict:
-        """模拟支付请求(实际需调用支付宝/微信支付API)"""
-        # 模拟支付结果（提高成功率到95%）
-        is_success = True if time.time() % 20 != 0 else False
-        return {
-            "order_id": order_id,
-            "status": "success" if is_success else "fail",
-            "transaction_id": f"txn_{str(uuid.uuid4())[:8]}",
-            "timestamp": time.time()
-        }
+        """使用支付网关处理支付请求"""
+        return payment_gateway.process_payment(
+            order_id=order_id,
+            amount=DB["orders"][order_id]["amount"],
+            method=PaymentMethod.DIRECT
+        )
 
     @staticmethod
     def verify_signature(params: dict) -> bool:
-        """模拟支付回调签名验证(实际需按支付平台规则实现)"""
-        # 简化逻辑：校验order_id存在且签名与秘钥一致
-        return params.get("order_id") in DB["orders"] and params.get("signature") == API_SECRET
+        """支付回调签名验证"""
+        return payment_gateway.verify_callback(params)
 
     @staticmethod
     def generate_qr_code(order_id: str, amount: float) -> dict:
         """创建支付二维码"""
-        # 构建支付链接（实际环境需要真实的支付网关链接）
-        payment_url = f"{PAYMENT_GATEWAY}/pay?order_id={order_id}&amount={amount}"
-        
-        # 生成二维码
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(payment_url)
-        qr.make(fit=True)
-        
-        # 创建二维码图片
-        img = qr.make_image(fill_color="black", back_color="white")
-        
-        # 转换为base64字符串
-        buffer = io.BytesIO()
-        img.save(buffer, format='PNG')
-        img_str = base64.b64encode(buffer.getvalue()).decode()
-        
-        return {
-            "qr_code": f"data:image/png;base64,{img_str}",
-            "payment_url": payment_url,
-            "order_id": order_id,
-            "amount": amount
-        }
+        return payment_gateway.generate_qr_code(order_id, amount)
 
 
 ### **模块4：充值服务（核心实时操作）**
@@ -242,7 +216,7 @@ def process_payment():
     else:
         # TODO: 调用真实支付接口
         return jsonify({"code": 501, "msg": "真实支付功能暂未实现"}), 501
-    if pay_result["status"] == "success":
+    if pay_result["status"] == PaymentStatus.PAID.value:
         OrderService.update_order_status(order_id, "paid")
         # 支付成功后扣除用户余额
         order = DB["orders"][order_id]
