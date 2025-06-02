@@ -171,7 +171,24 @@ class PaymentGateway:
             raise NotImplementedError("真实微信支付功能暂未实现")
 
     def _process_alipay_payment(self, order_id: str, amount: float) -> Dict:
-        """处理支付宝支付"""
+        """
+        处理支付宝支付
+        
+        Args:
+            order_id: 订单ID
+            amount: 支付金额(单位:元)
+            
+        Returns:
+            Dict: 支付宝支付结果，包含:
+                - order_id: 订单ID
+                - payment_method: 支付方式
+                - status: 支付状态
+                - transaction_id: 支付宝交易号
+                - timestamp: 支付时间戳
+                
+        Note:
+            真实实现需要调用支付宝支付API，当前为模拟模式
+        """
         if self.mock_mode:
             return {
                 "order_id": order_id,

@@ -1,4 +1,4 @@
-# admin/__init__.py
+# admin/__main__.py
 from flask import Flask
 from .payment_gateway import PaymentGateway, PaymentMethod, PaymentStatus
 import logging
@@ -25,7 +25,7 @@ def start_admin():
         return "Admin Service is running!"
 
     # 启动服务
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=True, host="127.0.0.1", port=5001)
 
 
 

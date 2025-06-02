@@ -8,7 +8,7 @@ import io
 import base64
 import qrcode
 import os
-from admin import PaymentGateway, PaymentMethod, PaymentStatus
+from admin.__main__ import PaymentGateway, PaymentMethod, PaymentStatus
 
 load_dotenv()  # 加载环境变量
 
@@ -62,7 +62,7 @@ DB = {
 
 # 支付网关配置
 payment_gateway = PaymentGateway({
-    "gateway_url": "http://localhost:5000",
+    "gateway_url": "http://localhost:5001",
     "api_secret": "your-secret-key",
     "mock_mode": MOCK_MODE
 })
