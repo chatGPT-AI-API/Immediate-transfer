@@ -124,7 +124,9 @@
                 .then(data => {
                     if (data.code === 200) {
                         // 支付成功，跳转结果页
-                        window.location.href = `/payment_callback?order_id=${orderId}&amount=${amount}&status=success`;
+                        // window.location.href = `/payment_callback?order_id=${orderId}&amount=${amount}&status=success`;
+                        // 修改为跳转到扫码支付页
+                        window.location.href = `/qr_payment?order_id=${orderId}&amount=${amount}`;
                     } else {
                         // 支付失败
                         statusMessage.textContent = `支付失败: ${data.msg}`;
