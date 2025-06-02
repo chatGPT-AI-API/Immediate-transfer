@@ -133,4 +133,4 @@ POST /api/pay
 1. 安装依赖: `pip install -r requirements.txt`
 2. 配置.env文件
 3. 启动服务: `python app.py`
-4. 访问http://localhost:5000使用支付功能
+4. 访问 http://localhost:5000 使用支付功能
