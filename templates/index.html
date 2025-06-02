@@ -112,7 +112,7 @@
             messageDiv.style.color = '#555'; // Reset color for processing message
 
             try {
-                // 假设后端有一个 /api/place_order 接口用于创建订单
+                // 调用后端创建订单接口
                 const response = await fetch('/api/place_order', {
                     method: 'POST',
                     headers: {
@@ -122,21 +122,21 @@
                 });
                 const data = await response.json();
                 if (response.ok) {
-                    // Update success message to show order_id
+                    // 更新成功消息显示订单号
                     const orderId = data.order_id;
                     messageDiv.textContent = `订单创建成功，订单号: ${orderId}，正在跳转...`;
                     messageDiv.style.color = 'green';
-                    // Pass account number and orderId to the next page
+                    // 传递账号和订单号到下一页
                     const redirectUrl = `/mock_payment?orderId=${orderId}&amount=${amount}`;
                     setTimeout(() => { window.location.replace(redirectUrl); }, 1500); // Add a small delay before redirecting
 
-                    // Hide the balance query button
+                    // 隐藏余额查询按钮
                     const balanceButton = document.getElementById('balanceQueryButtonContainer');
                     if (balanceButton) {
                         balanceButton.style.display = 'none';
                     }
                 } else {
-                    // Update failure message to show backend error message
+                    // 显示后端错误信息
                     messageDiv.textContent = `请求失败: ${data.msg || '未知错误'}`;
                     messageDiv.style.color = 'red'; // Add some styling for error messages
                 }

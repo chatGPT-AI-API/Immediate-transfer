@@ -107,10 +107,10 @@
             }
 
             try {
-                // 模拟API调用
+                // 调用余额查询API
                 const response = await fetch(`/api/check_balance?account=${account}`);
-                // 注意：如果后端没有返回有效的JSON，response.json()会抛出错误。
-                // 截图中的错误 "Unexpected token '<>', "<!doctype "... is not valid JSON" 通常表示后端返回了HTML或其他非JSON格式的内容。
+                // 注意：如果返回非JSON格式内容会抛出错误
+                // 例如返回HTML时会出现解析错误
                 const data = await response.json();
                 
                 if (response.ok) {

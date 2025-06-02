@@ -33,32 +33,32 @@
                     if (data.status === 'paid') {
                         // 支付成功
                         clearInterval(checkInterval); // 停止定时器
-                        // alert('支付成功！'); // 可以选择移除或修改此提示
+                        // 可以选择移除或修改此提示
                         window.location.href = `/payment_callback?order_id=${orderId}&amount=${amount}&status=success`;
                     } else {
-                        // 支付未完成，继续检查或处理其他状态
+                        // 支付未完成，继续轮询状态
                         console.log('支付状态:', data.status);
                     }
                 })
                 .catch(error => {
                     console.error('检查支付状态时发生错误:', error);
-                    // 错误处理，例如停止检查或给出提示
-                    // clearInterval(checkInterval); // 发生错误时是否停止，取决于需求
+                    // 错误处理逻辑
+                    // clearInterval(checkInterval); // 可根据需求决定是否停止检查
                 });
         }
 
         // 每5秒检查一次支付状态
         checkInterval = setInterval(checkPaymentStatus, 5000);
 
-        // 可选：添加一个最大检查次数或总检查时间的限制，避免无限检查
-        // let maxChecks = 60; // 例如，最多检查60次 (总计5分钟)
+        // 可选：添加检查次数限制防止无限轮询
+        // let maxChecks = 60; // 最多检查60次(约5分钟)
         // let checksDone = 0;
         // checkInterval = setInterval(() => {
         //     checksDone++;
         //     if (checksDone > maxChecks) {
         //         clearInterval(checkInterval);
-        //         console.log('达到最大检查次数，停止检查。');
-        //         // 可以选择提示用户或引导他们到其他页面
+        //         console.log('轮询次数已达上限');
+        //         // 可跳转页面或提示用户
         //     } else {
         //         checkPaymentStatus();
         //     }

@@ -72,14 +72,14 @@
     </div>
 
     <script>
-        // 从URL参数中获取支付结果
+        // 解析URL中的支付结果参数
         const urlParams = new URLSearchParams(window.location.search);
         const status = urlParams.get('status');
         const orderId = urlParams.get('order_id');
         const amount = urlParams.get('amount');
         const payTime = urlParams.get('pay_time') || new Date().toLocaleString();
 
-        // 显示支付结果
+        // 渲染支付结果UI
         const resultIcon = document.getElementById('resultIcon');
         const resultMessage = document.getElementById('resultMessage');
         
@@ -95,7 +95,7 @@
             resultMessage.style.color = '#f44336';
         }
 
-        // 显示订单详情
+        // 展示订单详细信息
         document.getElementById('orderId').textContent = orderId || '无';
         document.getElementById('amount').textContent = amount ? amount + '元' : '无';
         document.getElementById('payTime').textContent = payTime;

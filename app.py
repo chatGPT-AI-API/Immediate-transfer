@@ -11,7 +11,7 @@ import os
 
 load_dotenv()  # 加载环境变量
 
-# 支付模式配置 (True=模拟模式, False=真实模式)
+# 支付模式配置 (True表示模拟模式, False表示真实模式)
 MOCK_MODE = os.getenv('MOCK_MODE', 'true').lower() == 'true'
 
 app = Flask(__name__, template_folder='templates')
@@ -22,13 +22,13 @@ def index():
 
 @app.route('/mock_payment')
 def mock_payment_page():
-    """Render the mock payment page"""
+    """渲染模拟支付页面"""
     return render_template('mock_payment.html')
 
 @app.route('/payment_callback')
 @app.route('/payment_callback_page')
 def payment_callback_page():
-    """Render the payment callback result page with order details"""
+    """渲染支付回调结果页面，包含订单详情"""
     order_id = request.args.get('order_id')
     if not order_id or order_id not in DB["orders"]:
         return render_template('payment_callback.html',
@@ -46,10 +46,10 @@ def payment_callback_page():
 
 @app.route('/balance_query')
 def balance_query_page():
-    """Render the balance query page"""
+    """渲染余额查询页面"""
     return render_template('balance_query.html')
 
-# 模拟数据库（内存存储，生产环境需替换为MySQL/Redis等）
+# 模拟数据库(内存存储，生产环境需替换为MySQL/Redis等)
 DB = {
     "orders": {},          # 订单存储 {order_id: order_info}
     "users": {             # 用户余额 {user_id: {"balance": float, "update_time": float}}
@@ -59,14 +59,14 @@ DB = {
     }
 }
 
-# 模拟支付网关配置（实际需从支付平台获取）
+# 模拟支付网关配置(实际需从支付平台获取)
 PAYMENT_GATEWAY = "https://mock-payment-gateway.com"
-API_SECRET = "your-secret-key"  # 支付签名密钥
+API_SECRET = "your-secret-key"  # 支付接口签名密钥
 
 
 ### **模块1：用户中心服务（模拟账号校验）**
 def validate_user(account: str) -> bool:
-    """校验账号有效性（示例：假设账号为手机号格式，且必须存在于模拟数据库中）"""
+    """校验账号有效性(示例：假设账号为手机号格式，且必须存在于模拟数据库中)"""
     if not re.match(r'^1[3-9]\\d{9}$', account):
         return False
     return account in DB["users"] # 修改为只允许已存在的用户
@@ -76,7 +76,7 @@ def validate_user(account: str) -> bool:
 class OrderService:
     @staticmethod
     def create_order(account: str, amount: float) -> str:
-        """生成订单"""
+        """创建新订单"""
         order_id = str(uuid.uuid4())
         DB["orders"][order_id] = {
             "account": account,
@@ -90,7 +90,7 @@ class OrderService:
 
     @staticmethod
     def update_order_status(order_id: str, status: str):
-        """更新订单状态"""
+        """修改订单状态"""
         if order_id in DB["orders"]:
             DB["orders"][order_id]["status"] = status
             if status == "paid":
@@ -104,7 +104,7 @@ class OrderService:
 class PaymentService:
     @staticmethod
     def simulate_payment(order_id: str) -> dict:
-        """模拟支付请求（实际需调用支付宝/微信API）"""
+        """模拟支付请求(实际需调用支付宝/微信支付API)"""
         # 模拟支付结果（提高成功率到95%）
         is_success = True if time.time() % 20 != 0 else False
         return {
@@ -116,13 +116,13 @@ class PaymentService:
 
     @staticmethod
     def verify_signature(params: dict) -> bool:
-        """模拟支付回调签名校验（实际需按支付平台规则实现）"""
+        """模拟支付回调签名验证(实际需按支付平台规则实现)"""
         # 简化逻辑：校验order_id存在且签名与秘钥一致
         return params.get("order_id") in DB["orders"] and params.get("signature") == API_SECRET
 
     @staticmethod
     def generate_qr_code(order_id: str, amount: float) -> dict:
-        """生成支付二维码"""
+        """创建支付二维码"""
         # 构建支付链接（实际环境需要真实的支付网关链接）
         payment_url = f"{PAYMENT_GATEWAY}/pay?order_id={order_id}&amount={amount}"
         
@@ -156,7 +156,7 @@ class PaymentService:
 class RechargeService:
     @staticmethod
     def recharge(account: str, amount: float, order_id: str) -> bool:
-        """执行充值操作（需保证幂等性）"""
+        """执行充值操作(需保证幂等性)"""
         # 幂等性校验：检查订单是否已充值
         if DB["orders"][order_id]["status"] == "recharged":
             return True  # 已处理过，直接返回成功
@@ -173,7 +173,7 @@ class RechargeService:
 ### **模块5：API接口**
 @app.route("/api/place_order", methods=["POST"])
 def place_order():
-    """下单接口"""
+    """创建订单接口"""
     data = request.json
     account = data.get("account")
     amount = data.get("amount")
@@ -215,7 +215,7 @@ def place_order():
 
 @app.route("/api/pay", methods=["POST"])
 def process_payment():
-    """支付接口（支持二维码支付）
+    """支付处理接口(支持二维码支付)
     根据MOCK_MODE决定使用模拟支付还是真实支付
     """
     data = request.json
@@ -265,7 +265,7 @@ def process_payment():
 
 @app.route("/api/generate_qr_payment", methods=["POST"])
 def generate_qr_payment():
-    """生成支付二维码接口"""
+    """创建支付二维码接口"""
     data = request.json
     order_id = data.get("order_id")
     
@@ -286,7 +286,7 @@ def generate_qr_payment():
 
 @app.route("/api/check_order_status", methods=["GET"])
 def check_order_status():
-    """查询订单状态"""
+    """获取订单状态接口"""
     order_id = request.args.get("order_id")
     if not order_id or order_id not in DB["orders"]:
         return jsonify({"code": 404, "msg": "订单不存在"}), 404
@@ -301,7 +301,7 @@ def check_order_status():
 
 @app.route('/qr_payment')
 def qr_payment_page():
-    """二维码支付页面"""
+    """二维码支付展示页面"""
     order_id = request.args.get('order_id')
     if not order_id or order_id not in DB["orders"]:
         return "订单不存在", 404
@@ -316,7 +316,7 @@ def qr_payment_page():
 
 @app.route("/api/payment_callback", methods=["POST"])
 def payment_callback():
-    """支付回调接口（需保证安全）"""
+    """支付回调处理接口(需保证安全性)"""
     params = request.json
     order_id = params.get("order_id")
 
@@ -339,7 +339,7 @@ def payment_callback():
 
 @app.route("/api/check_balance", methods=["GET"])
 def check_balance():
-    """查询余额接口"""
+    """账户余额查询接口"""
     account = request.args.get("account")
     return jsonify({
         "code": 200,
@@ -351,7 +351,7 @@ def check_balance():
 
 @app.route("/api/payment_mode", methods=["GET"])
 def get_payment_mode():
-    """获取当前支付模式"""
+    """查询当前支付模式"""
     return jsonify({
         "code": 200,
         "mock_mode": MOCK_MODE,
